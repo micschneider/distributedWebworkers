@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="ISO-8859-1">
+	<title>WebWorker Test</title>
+	<script type="text/javascript" src="distributedWorkersFramework.js"></script>
+	<script type="text/javascript">
+		function init()
+		{
+			var worker1 = new DistributedWebworker("algorithmus.js");
+			worker1.addEventListener("message", 
+					 function(e)
+					 {
+						alert(e.data);
+					 }, 
+					 false);
+			var output = document.getElementById("output");
+			var ausgabe = "";
+		}
+		window.addEventListener("load", init, false);
+	</script>
+</head>
+<body>
+	<div id="output">
+	</div>
+</body>
+</html>
