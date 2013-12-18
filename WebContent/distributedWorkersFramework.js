@@ -1,6 +1,5 @@
 var waitWorkerWs = null;
 var waiterId = "";
-var localWorker = null;
 
 connectToWaitWebsocket();
 
@@ -26,27 +25,35 @@ function connectToWaitWebsocket()
 function closeWaitWs()
 {
 	if(waitWorkerWs != null)
+	{
 		waitWorkerWs.close();
+	}
 }
 
 function DistributedWebworker(file) 
 {
-	localWorker = new Worker("worker.js");
+	var sendWorker = new Worker("worker.js");
 	sendMessageToWorker('filename', file);
 	if(waiterId != "")
 		sendMessageToWorker('waiterId', waiterId);
+	
+	function sendMessageToWorker(type, content)
+	{
+		var data = '{"type":"' + type + '", "content": "' + content + '"}';
+		sendWorker.postMessage(data);
+	}
 					   
 	this.addEventListener = function()
 	{
-		Worker.prototype.addEventListener.apply(localWorker, arguments);
+		Worker.prototype.addEventListener.apply(sendWorker, arguments);
 	};
 	this.postMessage = function(message)
 	{
-		localWorker.postMessage(message);
+		sendWorker.postMessage(message);
 	};
 	this.terminate = function()
 	{
-		Worker.prototype.terminate.apply(localWorker);
+		Worker.prototype.terminate.apply(sendWorker);
 	};
 }
 
@@ -58,8 +65,19 @@ function incomingMessage(event)
 		case ("ID_MESSAGE"):
 		{
 			waiterId = json.content;
-			if(localWorker != null)
-				sendMessageToWorker("waiterId", waiterId);
+			break;
+		}
+		case ("CODE_MESSAGE"):
+		{
+			var bb = new Blob([json.content], {type: 'application/javascript'});
+
+			var blobURL = window.URL.createObjectURL(bb);
+
+			var worker = new Worker(blobURL);
+			worker.onmessage = function(e) 
+			{
+				sendToSendWebsocket("result", e.data);
+			};
 			break;
 		}
 		default:
@@ -69,10 +87,10 @@ function incomingMessage(event)
 	}
 }
 
-function sendMessageToWorker(type, content)
+function sendToSendWebsocket(type, content)
 {
-	var data = '{"type":"' + type + '", "content": "' + content + '"}';
-	localWorker.postMessage(data);
+	data = '{"type":"' + type + '","content":"' + content + '","waiterId":"' + waiterId + '"}';
+	waitWorkerWs.send(data);
 }
 
 window.addEventListener("unload", closeWaitWs, false);

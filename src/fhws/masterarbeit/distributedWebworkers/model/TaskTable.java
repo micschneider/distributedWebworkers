@@ -1,10 +1,11 @@
 package fhws.masterarbeit.distributedWebworkers.model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
-public class TaskTable 
+public class TaskTable implements Iterable<TableEntry>
 {
-	private ArrayList<TableEntry> entryList;
+	private ArrayList<TableEntry> entryList = new ArrayList<TableEntry>();
 	private static TaskTable table = new TaskTable();
 	
 	private TaskTable()
@@ -28,5 +29,12 @@ public class TaskTable
 	public void removeTableEntry(TableEntry entry)
 	{
 		entryList.remove(entry);
+	}
+
+	@Override
+	public Iterator<TableEntry> iterator() 
+	{
+		Iterator<TableEntry> iter = entryList.iterator();
+		return iter;
 	}
 }

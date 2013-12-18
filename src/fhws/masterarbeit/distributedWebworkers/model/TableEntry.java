@@ -29,4 +29,9 @@ public class TableEntry
 	{
 		return worker;
 	}
+	
+	public String toString()
+	{
+		return "ID: " + this.id + ", Sender: " + this.sender + ", Worker: " + this.worker;
+	}
 }

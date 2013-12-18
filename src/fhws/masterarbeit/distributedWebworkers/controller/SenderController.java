@@ -1,7 +1,5 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
-import javax.websocket.Session;
-
 import fhws.masterarbeit.distributedWebworkers.model.CodeMessage;
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
 import fhws.masterarbeit.distributedWebworkers.model.Message;
@@ -9,8 +7,7 @@ import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
 import fhws.masterarbeit.distributedWebworkers.model.TableEntry;
 import fhws.masterarbeit.distributedWebworkers.model.TaskTable;
 import fhws.masterarbeit.distributedWebworkers.model.WaiterSession;
-import fhws.masterarbeit.distributedWebworkers.server.SendWebsocket;
-import fhws.masterarbeit.distributedWebworkers.server.WaitWebsocket;
+import fhws.masterarbeit.distributedWebworkers.server.SenderEndpoint;
 
 public class SenderController
 {
@@ -31,21 +28,14 @@ public class SenderController
 		return controller;
 	}//end method getController
 
-	public void sessionAdded(Session session) 
+	public void senderEndpointAdded(SenderEndpoint sep) 
 	{
-		;
+		this.sessionMonitor.addSenderSession(sep);
 	}//end method sessionAdded
 
-	public void sessionRemoved(Session session) 
+	public void senderEndpointRemoved(String sessionId) 
 	{
-		try 
-		{
-			SendWebsocket.closeSession(session);
-		}//end try
-		catch (Throwable throwable)
-		{
-			this.consoleWriter.writeErrorToConsole(throwable);
-		}//end catch
+		this.sessionMonitor.removeSenderSession(sessionId);
 	}//end method sessionRemoved
 
 	public void handleError(Throwable throwable) 
@@ -53,17 +43,15 @@ public class SenderController
 		consoleWriter.writeErrorToConsole(throwable);
 	}//end method handleError
 
-	public void handleMessage(Message message, Session session) 
+	public void handleMessage(Message message, SenderEndpoint sep) throws Exception 
 	{
 		if(message instanceof CodeMessage)
 		{
 			CodeMessage cm = (CodeMessage)(message);
-			cm.setSenderId(session.getId());
-			this.consoleWriter.writeMessageToConsole("Message from Sender: " + cm.getSenderId() + "with WaiterID: " + cm.getWaiterId());
-
 			WaiterSession ws = this.sessionMonitor.getFreeSessionForWaiter(cm.getWaiterId());
-			WaitWebsocket.sendMessage(ws.getSession(), cm);
+			ws.getWaitWebsocket().sendMessage(message);
 			TableEntry te = new TableEntry(cm.getSenderId(), ws.getSessionId());
+			System.out.println("Neuer Eintrag in der TaskTable: " + te);
 			this.taskTable.addTableEntry(te);
 		}
 	}//end method handleTextMessage

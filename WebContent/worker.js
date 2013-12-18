@@ -90,7 +90,20 @@ function connectToSendWebsocket()
 	
 	localWorker.sendWorkerWs.onmessage = function(event)
 	{
-		localWorker.postMessage(event.data);
+		//
+		var json = JSON.parse(event.data);
+		switch(json.type)
+		{
+			case "RESULT_MESSAGE": 
+			{
+				localWorker.postMessage(json.content);
+				break;
+			}
+			default:
+			{
+				;
+			}
+		}
 	};
 		
 	sendWorkerWs.onerror = function(event)

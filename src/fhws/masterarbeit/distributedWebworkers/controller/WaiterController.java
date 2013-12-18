@@ -1,13 +1,14 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
-import javax.websocket.Session;
-
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
 import fhws.masterarbeit.distributedWebworkers.model.IdMessage;
+import fhws.masterarbeit.distributedWebworkers.model.Message;
+import fhws.masterarbeit.distributedWebworkers.model.ResultMessage;
+import fhws.masterarbeit.distributedWebworkers.model.SenderSession;
 import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
+import fhws.masterarbeit.distributedWebworkers.model.TableEntry;
 import fhws.masterarbeit.distributedWebworkers.model.TaskTable;
-import fhws.masterarbeit.distributedWebworkers.model.WaiterSession;
-import fhws.masterarbeit.distributedWebworkers.server.WaitWebsocket;
+import fhws.masterarbeit.distributedWebworkers.server.WaiterEndpoint;
 
 public class WaiterController 
 {
@@ -28,36 +29,47 @@ public class WaiterController
 		return controller;
 	}//end method getController
 
-	public void sessionAdded(Session session) 
+	public void waiterEndpointAdded(WaiterEndpoint wep) 
 	{
-		this.sessionMonitor.addWaiterSession(session);
+		this.sessionMonitor.addWaiterSession(wep);
 		IdMessage idm = new IdMessage();
-		idm.setContent(session.getId());
-		WaitWebsocket.sendMessage(session, idm);
+		idm.setContent(wep.getSession().getId());
+		wep.sendMessage(idm);
 	}//end method sessionAdded
 
-	public void sessionRemoved(Session session) 
+	public void waiterEndpointRemoved(String sessionId) 
 	{
-		this.sessionMonitor.removeWaiterSession(session);
-				
-		try 
-		{
-			WaitWebsocket.closeSession(session);
-		}//end try
-		catch (Throwable throwable)
-		{
-			this.consoleWriter.writeErrorToConsole(throwable);
-		}//end catch
+		this.sessionMonitor.removeWaiterSession(sessionId);
 	}//end method sessionRemoved
 
 	public void handleError(Throwable throwable) 
 	{
-		consoleWriter.writeErrorToConsole(throwable);
+		this.consoleWriter.writeErrorToConsole(throwable);
 	}//end method handleError
 
-	public void handleTextMessage(String message) 
+	public void handleMessage(Message message, WaiterEndpoint wep) 
 	{
-		consoleWriter.writeMessageToConsole(message);
+		if(message instanceof ResultMessage)
+		{
+			System.out.println("Ergebnis von Waiter mit der ID " + wep.getSession().getId() + " erhalten");
+			String receiverId = "";
+			for(TableEntry te : taskTable)
+			{
+				if(te.getWorker().equals(message.getSenderId()))
+				{
+					receiverId = te.getSender();
+					System.out.println("Empfänger der Ergebnisnachricht gefunden");
+					taskTable.removeTableEntry(te);
+					break;
+				}
+			}
+			if(!receiverId.equals(""))
+			{
+				SenderSession receiverSession = sessionMonitor.getSenderSessionById(receiverId);
+				System.out.println("Sende Ergebnis an SenderClient mit der ID " + receiverSession.getSessionId());
+				receiverSession.getSendWebsocket().sendMessage(message);
+			}
+		}
 	}//end method handleTextMessage
 }//end class WorkerController
 

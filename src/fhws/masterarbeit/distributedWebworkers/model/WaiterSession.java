@@ -1,23 +1,23 @@
 package fhws.masterarbeit.distributedWebworkers.model;
 
-import javax.websocket.Session;
+import fhws.masterarbeit.distributedWebworkers.server.WaiterEndpoint;
 
 public class WaiterSession 
 {
-	private Session session;
+	private WaiterEndpoint waiterEndpoint;
 	private String sessionId;
 	private boolean free;
 	
-	public WaiterSession(Session session)
+	public WaiterSession(WaiterEndpoint wep)
 	{
-		this.session = session;
-		this.sessionId = session.getId();
+		this.waiterEndpoint = wep;
+		this.sessionId = this.waiterEndpoint.getSession().getId();
 		this.free = true;
 	}
 	
-	public Session getSession()
+	public WaiterEndpoint getWaitWebsocket()
 	{
-		return this.session;
+		return this.waiterEndpoint;
 	}
 	
 	public String getSessionId()

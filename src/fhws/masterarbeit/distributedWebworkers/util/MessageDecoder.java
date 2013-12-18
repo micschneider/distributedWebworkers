@@ -28,16 +28,26 @@ public class MessageDecoder implements Decoder.Text<Message>
 	{
 		JSONObject obj = (JSONObject) JSONSerializer.toJSON(message);   
 		
-		if(obj.get("type").equals("code"))
+		switch(obj.get("type").toString())
 		{
-			CodeMessage cm = new CodeMessage();
-			cm.setContent(obj.getString("content"));
-			cm.setWaiterId(obj.getString("waiterId"));
-			return cm;
-		}
-		else
-		{
-			return new ResultMessage();
+		
+			case "code":
+			{
+				CodeMessage cm = new CodeMessage();
+				cm.setContent(obj.getString("content"));
+				cm.setWaiterId(obj.getString("waiterId"));
+				return cm;
+			}
+			case "result":
+			{
+				ResultMessage rm = new ResultMessage();
+				rm.setContent(obj.getString("content"));
+				return rm;
+			}
+			default:
+			{
+				return null;
+			}
 		}
 	}
 

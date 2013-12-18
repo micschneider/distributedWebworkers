@@ -24,38 +24,41 @@ import fhws.masterarbeit.distributedWebworkers.util.MessageEncoder;
 @ServerEndpoint(value = "/waitWebsocket",
 				encoders = {MessageEncoder.class},
 				decoders = {MessageDecoder.class})
-public class WaitWebsocket 
+public class WaiterEndpoint 
 {
 	/**
 	 * Stores a reference to the session object.
 	 */
 	private Session session;
 	/**
-	 * Stores a static reference to the controller. 
+	 * Stores a reference to the static Waiter controller. 
 	 */
-	private static WaiterController controller;
+	private WaiterController controller;
 	
 	/**
 	 * Is called when a new waiter client connects to the server and notifies the controller, 
-	 * it has to add a new session.
-	 * @param session Represents the new session
+	 * it has to add a new connection.
+	 * @param session Represents the new session between the server and the waiter client
 	 */
 	@OnOpen
 	public void onOpen(Session session)
 	{
+		System.out.println("Neuer WaiterClient mit der ID " + session.getId() + " connected");
 		this.session = session;
-		controller = WaiterController.getController();
-		controller.sessionAdded(session);
+		this.controller = WaiterController.getController();
+		this.controller.waiterEndpointAdded(this);
 	}//end method onOpen
 	
 	/**
 	 * Informs the controller, that a new message from a waiter client is incoming.
-	 * @param message represents the message as a string
+	 * @param message represents the message
 	 */
 	@OnMessage
-	public void onMessage(String message)
+	public void onMessage(Message message)
 	{
-		controller.handleTextMessage(message);
+		System.out.println("Neue Nachticht vom WaiterClient " + this.session.getId() + " erhalten");
+		message.setSenderId(this.session.getId());
+		this.controller.handleMessage(message, this);
 	}//end method onMessage
 	
 	/**
@@ -65,7 +68,7 @@ public class WaitWebsocket
 	@OnError
 	public void onError(Throwable throwable)
 	{
-		controller.handleError(throwable);
+		this.controller.handleError(throwable);
 	}//end method onError
 	
 	/**
@@ -75,19 +78,20 @@ public class WaitWebsocket
 	@OnClose
 	public void onClose()
 	{
-		controller.sessionRemoved(this.session);
+		System.out.println("Session mit WaiterClient " + this.session.getId() + " wurde vom Client geschlossen");
+		this.controller.waiterEndpointRemoved(this.session.getId());
 	}//end method onClose
 	
 	/**
 	 * Sends JavaScript code to a certain waiter client.
-	 * @param session represents the session where to send the code
 	 * @param code represents the code to send as a string
 	 */
-	public static void sendMessage(Session session, Message message)
+	public void sendMessage(Message message)
 	{
 		try 
 		{
-			session.getBasicRemote().sendObject(message);
+			System.out.println("Sende Nachricht an WaiterClient mit der ID " + this.session.getId());
+			this.session.getBasicRemote().sendObject(message);
 		}//end try
 		catch (IOException | EncodeException e) 
 		{
@@ -97,11 +101,22 @@ public class WaitWebsocket
 
 	/**
 	 * Closes a certain session
-	 * @param session represents the session to be closed
 	 * @throws IOException if there is an error while closing the session
 	 */
-	public static void closeSession(Session session) throws IOException 
+	public void closeSession()
 	{
-		session.close();
+		try 
+		{
+			System.out.println("Session mit WaiterClient " + this.session.getId() + "  wird vom Server geschlossen");
+			this.session.close();
+		} catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
 	}//end method closeSession
+	
+	public Session getSession()
+	{
+		return this.session;
+	}
 }//end class WaitWebsocket
