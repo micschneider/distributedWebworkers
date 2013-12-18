@@ -101,7 +101,7 @@ public class SessionMonitor
 		if(freeWaiterSessions.size() > 0)
 		{
 			int random = (int)(Math.random() * freeWaiterSessions.size());
-			System.out.println("Freder Waiter mit ID " + freeWaiterSessions.get(random).getSessionId() + " erledigt die Aufgabe");
+			System.out.println("Fremder Waiter mit ID " + freeWaiterSessions.get(random).getSessionId() + " erledigt die Aufgabe");
 			return freeWaiterSessions.get(random);
 		}
 		else

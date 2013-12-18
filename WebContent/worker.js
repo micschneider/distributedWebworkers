@@ -90,13 +90,13 @@ function connectToSendWebsocket()
 	
 	localWorker.sendWorkerWs.onmessage = function(event)
 	{
-		//
 		var json = JSON.parse(event.data);
 		switch(json.type)
 		{
-			case "RESULT_MESSAGE": 
+			case ("RESULT_MESSAGE"): 
 			{
 				localWorker.postMessage(json.content);
+				//localWorker.terminate();
 				break;
 			}
 			default:
@@ -108,6 +108,7 @@ function connectToSendWebsocket()
 		
 	sendWorkerWs.onerror = function(event)
 	{
+		localWorker.postMessage("ERROR");
 	}; //end function
 }
 

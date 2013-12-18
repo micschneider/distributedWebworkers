@@ -58,7 +58,7 @@ public class WaiterController
 				if(te.getWorker().equals(message.getSenderId()))
 				{
 					receiverId = te.getSender();
-					System.out.println("Empfänger der Ergebnisnachricht gefunden");
+					System.out.println("Empfänger der Ergebnisnachricht gefunden. ID: " + receiverId);
 					taskTable.removeTableEntry(te);
 					break;
 				}
@@ -66,7 +66,6 @@ public class WaiterController
 			if(!receiverId.equals(""))
 			{
 				SenderSession receiverSession = sessionMonitor.getSenderSessionById(receiverId);
-				System.out.println("Sende Ergebnis an SenderClient mit der ID " + receiverSession.getSessionId());
 				receiverSession.getSendWebsocket().sendMessage(message);
 			}
 		}

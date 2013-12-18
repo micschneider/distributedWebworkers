@@ -35,7 +35,7 @@ public class SenderEndpoint
 	@OnMessage
 	public void onMessage(Message message)
 	{
-		System.out.println("Neue Nachticht vom SenderClient " + this.session.getId() + " erhalten");
+		System.out.println("Neue Nachricht vom SenderClient " + this.session.getId() + " erhalten");
 		try 
 		{
 			message.setSenderId(this.session.getId());

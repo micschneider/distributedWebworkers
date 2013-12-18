@@ -56,7 +56,7 @@ public class WaiterEndpoint
 	@OnMessage
 	public void onMessage(Message message)
 	{
-		System.out.println("Neue Nachticht vom WaiterClient " + this.session.getId() + " erhalten");
+		System.out.println("Neue Nachricht vom WaiterClient " + this.session.getId() + " erhalten");
 		message.setSenderId(this.session.getId());
 		this.controller.handleMessage(message, this);
 	}//end method onMessage
