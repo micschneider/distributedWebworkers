@@ -92,10 +92,8 @@ public class SessionMonitor
 	        Map.Entry<String, WaiterSession> pairs = (Map.Entry<String, WaiterSession>)it.next();
 	        if(pairs.getValue().isFree() && !pairs.getValue().getSessionId().equals(waiterId))
 	        	freeWaiterSessions.add(pairs.getValue());
-			else if(pairs.getValue().getSessionId().equals(waiterId))
-				waiterHimself = pairs.getValue();
-			else
-				throw new Exception("NO SESSION FOUND");
+	        else if(pairs.getValue().getSessionId().equals(waiterId))
+	        	waiterHimself = pairs.getValue();
 	    }
 	    
 		if(freeWaiterSessions.size() > 0)
@@ -104,10 +102,15 @@ public class SessionMonitor
 			System.out.println("Fremder Waiter mit ID " + freeWaiterSessions.get(random).getSessionId() + " erledigt die Aufgabe");
 			return freeWaiterSessions.get(random);
 		}
+		else if(waiterHimself != null)
+		{
+			System.out.println("Kein anderer freier Waiter! Arbeit muss vom Sender selbst erledigt werden");
+			return waiterHimself;
+		}
 		else
 		{
-			System.out.println("Kein anderer freier Waiter! Arbeit muss von Worker ID " + waiterHimself.getSessionId() + " selbst erledigt werden");
-			return waiterHimself;
+			System.out.println("Kein anderer freier Waiter! Arbeit muss vom Sender selbst erledigt werden");
+			return null;
 		}
 	}
 }//end class SessionMonitor

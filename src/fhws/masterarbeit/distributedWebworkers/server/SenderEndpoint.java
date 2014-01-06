@@ -35,7 +35,7 @@ public class SenderEndpoint
 	@OnMessage
 	public void onMessage(Message message)
 	{
-		System.out.println("Neue Nachricht vom SenderClient " + this.session.getId() + " erhalten");
+		System.out.println("Neue "+ message.getClass().getSimpleName() + " vom SenderClient " + this.session.getId() + " erhalten");
 		try 
 		{
 			message.setSenderId(this.session.getId());
@@ -83,7 +83,7 @@ public class SenderEndpoint
 	{
 		try 
 		{
-			System.out.println("Sende Nachricht an SenderClient mit der ID " + this.session.getId());
+			System.out.println("Sende "+ message.getClass().getSimpleName() + " an SenderClient mit der ID " + this.session.getId());
 			this.session.getBasicRemote().sendObject(message);
 		}//end try
 		catch (IOException | EncodeException e) 

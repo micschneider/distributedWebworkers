@@ -56,7 +56,7 @@ public class WaiterEndpoint
 	@OnMessage
 	public void onMessage(Message message)
 	{
-		System.out.println("Neue Nachricht vom WaiterClient " + this.session.getId() + " erhalten");
+		System.out.println("Neue " + message.getClass().getSimpleName() + " vom WaiterClient " + this.session.getId() + " erhalten");
 		message.setSenderId(this.session.getId());
 		this.controller.handleMessage(message, this);
 	}//end method onMessage
@@ -90,7 +90,7 @@ public class WaiterEndpoint
 	{
 		try 
 		{
-			System.out.println("Sende Nachricht an WaiterClient mit der ID " + this.session.getId());
+			System.out.println("Sende " + message.getClass().getSimpleName() + " an WaiterClient mit der ID " + this.session.getId());
 			this.session.getBasicRemote().sendObject(message);
 		}//end try
 		catch (IOException | EncodeException e) 

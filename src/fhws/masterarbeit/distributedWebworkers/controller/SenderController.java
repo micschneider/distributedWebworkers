@@ -3,6 +3,7 @@ package fhws.masterarbeit.distributedWebworkers.controller;
 import fhws.masterarbeit.distributedWebworkers.model.CodeMessage;
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
 import fhws.masterarbeit.distributedWebworkers.model.Message;
+import fhws.masterarbeit.distributedWebworkers.model.NoWaiterMessage;
 import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
 import fhws.masterarbeit.distributedWebworkers.model.TableEntry;
 import fhws.masterarbeit.distributedWebworkers.model.TaskTable;
@@ -49,10 +50,19 @@ public class SenderController
 		{
 			CodeMessage cm = (CodeMessage)(message);
 			WaiterSession ws = this.sessionMonitor.getFreeSessionForWaiter(cm.getWaiterId());
-			ws.getWaitWebsocket().sendMessage(message);
-			TableEntry te = new TableEntry(cm.getSenderId(), ws.getSessionId());
-			System.out.println("Neuer Eintrag in der TaskTable: " + te);
-			this.taskTable.addTableEntry(te);
+			if (ws != null)
+			{
+				ws.getWaitWebsocket().sendMessage(message);
+				TableEntry te = new TableEntry(cm.getSenderId(), ws.getSessionId());
+				System.out.println("Neuer Eintrag in der TaskTable: " + te);
+				this.taskTable.addTableEntry(te);
+			}
+			else
+			{
+				NoWaiterMessage nwm = new NoWaiterMessage();
+				nwm.setContent("Kein freier Waiter");
+				sep.sendMessage(nwm);
+			}
 		}
 	}//end method handleTextMessage
 }//end class ManagerController

@@ -75,7 +75,7 @@ function onReadyState()
 
 function connectToSendWebsocket()
 {
-	var wsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
+	var wsUri = "ws://192.168.0.103:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
 	
 	localWorker.sendWorkerWs = new WebSocket(wsUri);
 	
@@ -91,12 +91,22 @@ function connectToSendWebsocket()
 	localWorker.sendWorkerWs.onmessage = function(event)
 	{
 		var json = JSON.parse(event.data);
+		localWorker.postMessage(json.type);
 		switch(json.type)
 		{
 			case ("RESULT_MESSAGE"): 
 			{
 				localWorker.postMessage(json.content);
 				//localWorker.terminate();
+				break;
+			}
+			case ("NOWAITER_MESSAGE"):
+			{
+				var worker = new Worker(file);
+				worker.onmessage = function(e) 
+				{
+					localWorker.postMessage(e.data);
+				};
 				break;
 			}
 			default:
@@ -115,6 +125,8 @@ function connectToSendWebsocket()
 function sendToSendWebsocket(type, content)
 {
 	var data = content.replace(/\r|\n/g, " ");
+	if(localWorker.waiterId == null)
+		localWorker.waiterId = "0";
 	data = '{"type":"' + type + '","content":"' + data + '","waiterId":"' + localWorker.waiterId + '"}';
 	localWorker.sendWorkerWs.send(data);
 }
