@@ -11,7 +11,8 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import fhws.masterarbeit.distributedWebworkers.controller.WaiterController;
-import fhws.masterarbeit.distributedWebworkers.model.Message;
+import fhws.masterarbeit.distributedWebworkers.messages.ClientMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.Message;
 import fhws.masterarbeit.distributedWebworkers.util.MessageDecoder;
 import fhws.masterarbeit.distributedWebworkers.util.MessageEncoder;
 
@@ -54,7 +55,7 @@ public class WaiterEndpoint
 	 * @param message represents the message
 	 */
 	@OnMessage
-	public void onMessage(Message message)
+	public void onMessage(ClientMessage message)
 	{
 		System.out.println("Neue " + message.getClass().getSimpleName() + " vom WaiterClient " + this.session.getId() + " erhalten");
 		message.setSenderId(this.session.getId());
@@ -78,7 +79,7 @@ public class WaiterEndpoint
 	@OnClose
 	public void onClose()
 	{
-		System.out.println("Session mit WaiterClient " + this.session.getId() + " wurde vom Client geschlossen");
+		System.out.println("Session mit WaiterClient " + this.session.getId() + " wurde geschlossen");
 		this.controller.waiterEndpointRemoved(this.session.getId());
 	}//end method onClose
 	

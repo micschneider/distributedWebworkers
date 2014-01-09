@@ -2,10 +2,9 @@ package fhws.masterarbeit.distributedWebworkers.model;
 
 import fhws.masterarbeit.distributedWebworkers.server.SenderEndpoint;
 
-public class SenderSession 
+public class SenderSession extends MySession
 {
 	private SenderEndpoint senderEndpoint;
-	private String sessionId;
 	
 	public SenderSession(SenderEndpoint sep)
 	{
@@ -16,10 +15,5 @@ public class SenderSession
 	public SenderEndpoint getSendWebsocket()
 	{
 		return this.senderEndpoint;
-	}
-	
-	public String getSessionId()
-	{
-		return this.sessionId;
 	}
 }

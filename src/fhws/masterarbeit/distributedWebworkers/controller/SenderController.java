@@ -1,9 +1,16 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
-import fhws.masterarbeit.distributedWebworkers.model.CodeMessage;
+import java.util.Iterator;
+
+import fhws.masterarbeit.distributedWebworkers.messages.CodeMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.Message;
+import fhws.masterarbeit.distributedWebworkers.messages.NoRecipientPostMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.NoRecipientTerminateMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.NoWaiterMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.PostMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.TerminateMessage;
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
-import fhws.masterarbeit.distributedWebworkers.model.Message;
-import fhws.masterarbeit.distributedWebworkers.model.NoWaiterMessage;
+import fhws.masterarbeit.distributedWebworkers.model.SenderSession;
 import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
 import fhws.masterarbeit.distributedWebworkers.model.TableEntry;
 import fhws.masterarbeit.distributedWebworkers.model.TaskTable;
@@ -60,8 +67,65 @@ public class SenderController
 			else
 			{
 				NoWaiterMessage nwm = new NoWaiterMessage();
-				nwm.setContent("Kein freier Waiter");
+				nwm.setContent(cm.getSenderId());
 				sep.sendMessage(nwm);
+				/*TableEntry te = new TableEntry(cm.getSenderId(), cm.getSenderId());
+				System.out.println("Neuer Eintrag in der TaskTable: " + te);
+				this.taskTable.addTableEntry(te);*/
+			}
+		}
+		else if(message instanceof PostMessage)
+		{
+			PostMessage pm = (PostMessage)(message);
+			String workerId = this.taskTable.getWorkerIdBySenderId(pm.getSenderId());
+			if(workerId != null)
+			{
+				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(workerId);
+				if(ws!=null)
+					ws.getWaitWebsocket().sendMessage(pm);
+			}
+			else
+			{
+				NoRecipientPostMessage nrpm = new NoRecipientPostMessage();
+				nrpm.setContent(pm.getContent());
+				nrpm.setSenderId(pm.getSenderId());
+				sep.sendMessage(nrpm);
+			}
+		}
+		else if(message instanceof TerminateMessage)
+		{
+			TerminateMessage tm = (TerminateMessage)(message);
+			String workerId = this.taskTable.getWorkerIdBySenderId(tm.getSenderId());
+			if(workerId != null)
+			{
+				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(workerId);
+				if(ws!=null)
+					ws.getWaitWebsocket().sendMessage(tm);
+				
+				Iterator<TableEntry> it = this.taskTable.iterator();
+				TableEntry toRemove = null;
+				while(it.hasNext())
+				{
+					TableEntry te = it.next();
+					if(te.getSender().equals(tm.getSenderId()))
+					{
+						toRemove = te;
+						String sender = te.getSender();
+						SenderSession ss = this.sessionMonitor.getSenderSessionById(sender);
+						ss.getSendWebsocket().closeSession();
+						System.out.println("Tabelleneintrag "+ te + " gelöscht");
+					}
+				}
+				if(toRemove != null)
+					this.taskTable.removeTableEntry(toRemove);
+			}
+			else
+			{
+				NoRecipientTerminateMessage nrtm = new NoRecipientTerminateMessage();
+				nrtm.setContent(tm.getSenderId());
+				sep.sendMessage(nrtm);
+				SenderSession ss = this.sessionMonitor.getSenderSessionById(tm.getSenderId());
+				ss.getSendWebsocket().closeSession();
 			}
 		}
 	}//end method handleTextMessage

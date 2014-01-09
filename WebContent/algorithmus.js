@@ -1,3 +1,6 @@
-var i = 5;
-i += 7;
-this.postMessage(i);
+this.addEventListener("message", 
+					  function(e)
+					  {
+						this.postMessage(e.data);
+					  }, 
+					  false);

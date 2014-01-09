@@ -5,11 +5,13 @@ import javax.websocket.EndpointConfig;
 
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-import fhws.masterarbeit.distributedWebworkers.model.CodeMessage;
-import fhws.masterarbeit.distributedWebworkers.model.Message;
-import fhws.masterarbeit.distributedWebworkers.model.ResultMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.ClientMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.CodeMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.PostMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.ResultMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.TerminateMessage;
 
-public class MessageDecoder implements Decoder.Text<Message>
+public class MessageDecoder implements Decoder.Text<ClientMessage>
 {
 	@Override
 	public void destroy() 
@@ -24,7 +26,7 @@ public class MessageDecoder implements Decoder.Text<Message>
 	}
 
 	@Override
-	public Message decode(String message)
+	public ClientMessage decode(String message)
 	{
 		JSONObject obj = (JSONObject) JSONSerializer.toJSON(message);   
 		
@@ -42,7 +44,20 @@ public class MessageDecoder implements Decoder.Text<Message>
 			{
 				ResultMessage rm = new ResultMessage();
 				rm.setContent(obj.getString("content"));
+				rm.setRecipientId(obj.getString("recipientId"));
 				return rm;
+			}
+			case "post":
+			{
+				PostMessage pm = new PostMessage();
+				pm.setContent(obj.getString("content"));
+				return pm;
+			}
+			case "terminate":
+			{
+				TerminateMessage tm = new TerminateMessage();
+				tm.setContent("Closing");
+				return tm;
 			}
 			default:
 			{

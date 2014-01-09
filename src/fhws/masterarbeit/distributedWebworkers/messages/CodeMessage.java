@@ -1,6 +1,6 @@
-package fhws.masterarbeit.distributedWebworkers.model;
+package fhws.masterarbeit.distributedWebworkers.messages;
 
-public class CodeMessage extends Message 
+public class CodeMessage extends ClientMessage 
 {
 	protected String waiterId;
 	

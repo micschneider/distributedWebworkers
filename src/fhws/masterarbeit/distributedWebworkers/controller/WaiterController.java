@@ -1,9 +1,11 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
+import java.util.Iterator;
+
+import fhws.masterarbeit.distributedWebworkers.messages.ClientMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.IdMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.ResultMessage;
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
-import fhws.masterarbeit.distributedWebworkers.model.IdMessage;
-import fhws.masterarbeit.distributedWebworkers.model.Message;
-import fhws.masterarbeit.distributedWebworkers.model.ResultMessage;
 import fhws.masterarbeit.distributedWebworkers.model.SenderSession;
 import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
 import fhws.masterarbeit.distributedWebworkers.model.TableEntry;
@@ -47,26 +49,24 @@ public class WaiterController
 		this.consoleWriter.writeErrorToConsole(throwable);
 	}//end method handleError
 
-	public void handleMessage(Message message, WaiterEndpoint wep) 
+	public void handleMessage(ClientMessage message, WaiterEndpoint wep) 
 	{
 		if(message instanceof ResultMessage)
 		{
+			ResultMessage rm = (ResultMessage)message;
 			System.out.println("Ergebnis von Waiter mit der ID " + wep.getSession().getId() + " erhalten");
-			String receiverId = "";
-			for(TableEntry te : taskTable)
+			Iterator<TableEntry> it = this.taskTable.iterator();
+			while(it.hasNext())
 			{
-				if(te.getWorker().equals(message.getSenderId()))
+				TableEntry te = it.next();
+				if(te.getSender().equals(rm.getRecipientId()))
 				{
-					receiverId = te.getSender();
-					System.out.println("Empfänger der Ergebnisnachricht gefunden. ID: " + receiverId);
-					taskTable.removeTableEntry(te);
+					System.out.println("Empfänger der Ergebnisnachricht gefunden. ID: " + rm.getRecipientId());
+					SenderSession receiverSession = sessionMonitor.getSenderSessionById(rm.getRecipientId());
+					receiverSession.getSendWebsocket().sendMessage(message);
+					//taskTable.removeTableEntry(te);
 					break;
 				}
-			}
-			if(!receiverId.equals(""))
-			{
-				SenderSession receiverSession = sessionMonitor.getSenderSessionById(receiverId);
-				receiverSession.getSendWebsocket().sendMessage(message);
 			}
 		}
 	}//end method handleTextMessage

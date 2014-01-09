@@ -2,10 +2,9 @@ package fhws.masterarbeit.distributedWebworkers.model;
 
 import fhws.masterarbeit.distributedWebworkers.server.WaiterEndpoint;
 
-public class WaiterSession 
+public class WaiterSession extends MySession
 {
 	private WaiterEndpoint waiterEndpoint;
-	private String sessionId;
 	private boolean free;
 	
 	public WaiterSession(WaiterEndpoint wep)
@@ -20,9 +19,14 @@ public class WaiterSession
 		return this.waiterEndpoint;
 	}
 	
-	public String getSessionId()
+	public void setBusy()
 	{
-		return this.sessionId;
+		this.free = false;
+	}
+	
+	public void setFree()
+	{
+		this.free = true;
 	}
 	
 	public boolean isFree()

@@ -1,0 +1,13 @@
+package fhws.masterarbeit.distributedWebworkers.messages;
+
+public enum MessageType 
+{
+	CODE_MESSAGE,
+	RESULT_MESSAGE,
+	ID_MESSAGE,
+	NO_WAITER_MESSAGE,
+	POST_MESSAGE,
+	TERMINATE_MESSAGE,
+	NO_RECIPIENT_POST_MESSAGE,
+	NO_RECIPIENT_TERMINATE_MESSAGE
+}

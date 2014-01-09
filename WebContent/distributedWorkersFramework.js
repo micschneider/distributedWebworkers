@@ -1,9 +1,11 @@
 var waitWorkerWs = null;
 var waiterId = "";
-var browserName = "";
+var localWorkerMap = new HashMap();
+var foreignWorkerMap = new HashMap();
 
 (function()
 {
+	var browserName = "";
 	var agent = navigator.userAgent.toLowerCase();  
 	if(agent.indexOf("gecko/") > -1)
 		browserName = "firefox";
@@ -18,7 +20,7 @@ var browserName = "";
 	
 	if(browserName == "chrome" || browserName == "firefox" || browserName == "opera")
 	{
-		var waitWsUri = "ws://192.168.0.103:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
+		var waitWsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
 		try 
 		{
 			waitWorkerWs = new WebSocket(waitWsUri);
@@ -29,6 +31,8 @@ var browserName = "";
 			waitWorkerWs.onmessage = function(event)
 			{
 				var json = JSON.parse(event.data);
+				console.log("WaiterWebsocket erhält:");
+				console.log(json);
 				switch(json.type)
 				{
 					case ("ID_MESSAGE"):
@@ -40,25 +44,60 @@ var browserName = "";
 					{
 						var bb = new Blob([json.content], {type: 'application/javascript'});
 						var blobURL = window.URL.createObjectURL(bb);
-						var worker = new Worker(blobURL);
-						worker.onmessage = function(e) 
+						var foreignWorker = new Worker(blobURL);
+				
+						foreignWorker.onmessage = function(e) 
 						{
-							data = '{"type":"result","content":"' + e.data + '","waiterId":"' + waiterId + '"}';
-							waitWorkerWs.send(data);
+							sendToWaitWebsocket("result", e.data, json.from);
+							//worker.terminate();
 						};
+						foreignWorkerMap.put(json.from, foreignWorker);
+						break;
+					}
+					case ("POST_MESSAGE"):
+					{
+						var foreignWorker = foreignWorkerMap.get(json.from);
+						if(foreignWorker!=null)
+						{
+							foreignWorker.postMessage(json.content);
+						}
+						else
+							console.log("Kein passender Empfänger für die Nachricht gefunden!");
+						break;
+					}
+					case ("TERMINATE_MESSAGE"):
+					{
+						var foreignWorker = foreignWorkerMap.get(json.from);
+						if(foreignWorker!=null)
+							foreignWorker.terminate();
+						foreignWorkerMap.remove(json.from);
 						break;
 					}
 					default:
 					{
-						alert("DistributedWorkersFramework meldet: Unbekannten Nachrichtentyp vom WaiterWebsocket erhalten.");
+						console.log("Unbekannten Nachrichtentyp vom WaiterWebsocket erhalten.");
 					}
 				}
 			};
 				
 			waitWorkerWs.onerror = function(evt)
 			{
-				alert("DistributedWorkersFramework meldet: Probleme bei der Verbindung zum WaiterWebsocket");
+				console.log("Problem bei der Verbindung zum WaiterWebsocket");
 			}; //end function
+			
+			function sendToWaitWebsocket(type, content, recipientId)
+			{
+				recipientId = (typeof recipientId === "undefined") ? "0" : recipientId;
+				if(waiterId == null)
+					waiterId = "0";
+				data = '{"type":"' + type + '","content":"' + content + '","waiterId":"' + waiterId + '"';
+				if(recipientId != 0)
+					data += ',"recipientId":"' + recipientId + '"';
+				data +=	'}';
+				console.log("WaiterWebsocket sendet:");
+				console.log(data);
+				waitWorkerWs.send(data);
+			}
 		}
 		catch(e)
 		{
@@ -73,50 +112,162 @@ var browserName = "";
 
 function DistributedWebworker(file) 
 {
-	if(browserName == "chrome" || browserName == "ie" || browserName == "opera")
-	{
-		var sendWorker = new Worker("worker.js");
-		sendMessageToWorker('filename', file);
+	var distributedWorker = this;
+	var callback;
+	var code = null;
+	var sendWorkerWs = null;
 		
-		if(waiterId != null)
-			sendMessageToWorker('waiterId', waiterId);
-	
-		function sendMessageToWorker(type, content)
+	(function()
+	{
+		var req = new XMLHttpRequest();
+		
+		if (req) 
 		{
-			var data = '{"type":"' + type + '", "content": "' + content + '"}';
-			sendWorker.postMessage(data);
+			req.onreadystatechange = function()
+			{
+				if (req.readyState == 4) 
+				{
+					code = req.responseText.replace(/\"/g,"'");
+					connectToWs();
+				}
+			};
+			req.open('GET',file,true);     // http-Methode, url, asynchron
+			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			req.setRequestHeader("Cache-Control", "no-cache");
+			req.setRequestHeader("Pragma", "no-cache");
+			req.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
+			req.send(null);
+		}	
+	}());
+
+	function connectToWs()
+	{
+		var wsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
+			
+		try
+		{
+			sendWorkerWs = new WebSocket(wsUri);
+			sendWorkerWs.onopen = function()
+			{
+				sendToSendWebsocket("code", code);	
+			}; // end function
+			
+			sendWorkerWs.onmessage = function(event)
+			{
+				var json = JSON.parse(event.data);
+				console.log("SenderWebsocket erhält:");
+				console.log(json);
+
+				switch(json.type)
+				{
+					case ("RESULT_MESSAGE"): 
+					{
+						var cbo = {"data":json.content};
+						//sendWorkerWs.close();
+						distributedWorker.callback(cbo);
+						break;
+					}
+					case ("NO_WAITER_MESSAGE"):
+					{
+						var localWorker = new Worker(file);
+						localWorker.onmessage = function(e) 
+						{
+							var cbo = {"data":e.data};
+							distributedWorker.callback(cbo);
+						};
+						localWorkerMap.put(json.content, localWorker);
+						break;
+					}
+					case ("NO_RECIPIENT_POST_MESSAGE"):
+					{
+						var localWorker = localWorkerMap.get(json.from);
+						if(localWorker!=null)
+						{
+							localWorker.postMessage(json.content);
+						}
+						else
+							console.log("Der Empfänger der Nachricht konnte nicht gefunden werden.");
+						break;
+					}
+					case("NO_RECIPIENT_TERMINATE_MESSAGE"):
+					{
+						var localWorker = localWorkerMap.get(json.content);
+						if(localWorker!=null)
+						{
+							localWorker.terminate();
+							localWorkerMap.remove(json.content);
+						}
+						else
+							console.log("Der zu beendende Worker konnte nicht gefunden werden");
+						break;
+					}
+					default:
+					{
+						;
+					}
+				}
+			};
 		}
-					   
-		this.addEventListener = function()
+		catch(e)
 		{
-			Worker.prototype.addEventListener.apply(sendWorker, arguments);
-		};
-		this.postMessage = function(message)
-		{
-			sendWorker.postMessage(message);
-		};
-		this.terminate = function()
-		{
-			Worker.prototype.terminate.apply(sendWorker);
-		};
+			throw "DistributedWorkersFramework meldet: Verbindung zum SenderWebsocket konnte nicht hergestellt werden. Bitte überprüfen Sie die URL!";
+		}
 	}
-	else
+
+	function sendToSendWebsocket(type, content)
 	{
-		var worker = new Worker(file);
-		this.addEventListener = function()
-		{
-			Worker.prototype.addEventListener.apply(worker, arguments);
-		};
-		this.postMessage = function(message)
-		{
-			worker.postMessage(message);
-		};
-		this.terminate = function()
-		{
-			Worker.prototype.terminate.apply(worker);
-		};
-		
+		var data = content.replace(/\r|\n|\t|\s/g, "");
+		if(waiterId == null)
+			waiterId = "0";
+		data = '{"type":"' + type + '","content":"' + data + '","waiterId":"' + waiterId + '"}';
+		console.log("SenderWebsocket sendet:");
+		console.log(data);
+		sendWorkerWs.send(data);
 	}
+					   
+	this.addEventListener = function(name, callback, syn)
+	{
+		if(name == "message")
+		{
+			this.callback = callback;
+		}
+	};
+	
+	this.postMessage = function(message)
+	{
+		if(sendWorkerWs.readyState==1)
+			sendToSendWebsocket("post", message);
+		else
+			console.log("Problem beim Senden der Nachricht");
+	};
+	
+	this.terminate = function()
+	{
+		if(sendWorkerWs.readyState==1)
+			sendToSendWebsocket("terminate", "");
+		else
+			console.log("Problem beim Beenden des Workers");
+	};
+}
+
+function HashMap()
+{
+	this.list = new Array();
+	
+	this.put = function(key, value)
+	{
+		this.list[key] = value;
+	};
+	
+	this.get = function(key)
+	{
+		return this.list[key];
+	};
+	
+	this.remove = function(key)
+	{
+		this.list[key] = null;
+	};
 }
 
 window.addEventListener("unload", 
@@ -126,8 +277,3 @@ window.addEventListener("unload",
 								waitWorkerWs.close();
 						}, 
 						false);
-
-
-
-
-

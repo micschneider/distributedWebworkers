@@ -11,7 +11,8 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import fhws.masterarbeit.distributedWebworkers.controller.SenderController;
-import fhws.masterarbeit.distributedWebworkers.model.Message;
+import fhws.masterarbeit.distributedWebworkers.messages.ClientMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.Message;
 import fhws.masterarbeit.distributedWebworkers.util.MessageDecoder;
 import fhws.masterarbeit.distributedWebworkers.util.MessageEncoder;
 
@@ -33,7 +34,7 @@ public class SenderEndpoint
 	}//end method onOpen
 	
 	@OnMessage
-	public void onMessage(Message message)
+	public void onMessage(ClientMessage message)
 	{
 		System.out.println("Neue "+ message.getClass().getSimpleName() + " vom SenderClient " + this.session.getId() + " erhalten");
 		try 
@@ -50,7 +51,7 @@ public class SenderEndpoint
 	@OnClose
 	public void onClose()
 	{
-		System.out.println("Session mit SenderClient " + this.session.getId() + " wurde vom Client geschlossen");
+		System.out.println("Session mit SenderClient " + this.session.getId() + " wurde geschlossen");
 		this.controller.senderEndpointRemoved(this.session.getId());
 		//this.session.close();
 	}//end method onClose

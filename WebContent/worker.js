@@ -2,12 +2,12 @@ var req = null;
 var file = "";
 var code = "";
 var waiterId = null;
-var localWorker = this;
+var distributedWorker = this;
 var sendWorkerWs = null;
 var sendWorkerStat = 0;
 
-localWorker.addEventListener("message", localWorker.incomingMessage, false);
-localWorker.connectToSendWebsocket();
+distributedWorker.addEventListener("message", distributedWorker.incomingMessage, false);
+distributedWorker.connectToSendWebsocket();
 
 function incomingMessage(event)
 {
@@ -16,43 +16,43 @@ function incomingMessage(event)
 	{
 		case ("filename"):
 		{
-			localWorker.file = json.content;
+			distributedWorker.file = json.content;
 		
-			if(localWorker.sendWorkerStat > 0)
+			if(distributedWorker.sendWorkerStat > 0)
 			{
-				localWorker.sendRequest(localWorker.file);
+				distributedWorker.sendRequest(distributedWorker.file);
 			}
 			break;
 		}
 		case ("waiterId"):
 		{
-			localWorker.waiterId = json.content;
+			distributedWorker.waiterId = json.content;
 			
-			if(localWorker.code != "")
+			if(distributedWorker.code != "")
 			{
-				localWorker.sendToSendWebsocket("code", localWorker.code);	
+				distributedWorker.sendToSendWebsocket("code", distributedWorker.code);	
 			}
 			break;
 		}
 		default:
 		{
-			localWorker.postMessage("Unknown message type");
+			distributedWorker.postMessage("Unknown message type");
 		}
 	}
 }
 
 function sendRequest(url) 
 {
-	localWorker.req = initXMLHTTPRequest();
-	if (localWorker.req) 
+	distributedWorker.req = initXMLHTTPRequest();
+	if (distributedWorker.req) 
 	{
-		localWorker.req.onreadystatechange = onReadyState;
-		localWorker.req.open('GET',url,true);     // http-Methode, url, asynchron
-		localWorker.req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-		localWorker.req.setRequestHeader("Cache-Control", "no-cache");
-		localWorker.req.setRequestHeader("Pragma", "no-cache");
-		localWorker.req.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
-		localWorker.req.send(null);
+		distributedWorker.req.onreadystatechange = onReadyState;
+		distributedWorker.req.open('GET',url,true);     // http-Methode, url, asynchron
+		distributedWorker.req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+		distributedWorker.req.setRequestHeader("Cache-Control", "no-cache");
+		distributedWorker.req.setRequestHeader("Pragma", "no-cache");
+		distributedWorker.req.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
+		distributedWorker.req.send(null);
 	 }
 }
 
@@ -63,12 +63,12 @@ function initXMLHTTPRequest()
 
 function onReadyState() 
 {
-	if (localWorker.req.readyState == 4) 
+	if (distributedWorker.req.readyState == 4) 
 	{
-		localWorker.code = req.responseText;
-		if(localWorker.waiterId != null)
+		distributedWorker.code = req.responseText;
+		if(distributedWorker.waiterId != null)
 		{
-			localWorker.sendToSendWebsocket("code", localWorker.code);
+			distributedWorker.sendToSendWebsocket("code", distributedWorker.code);
 		}
 	}
 }
@@ -77,26 +77,26 @@ function connectToSendWebsocket()
 {
 	var wsUri = "ws://192.168.0.103:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
 	
-	localWorker.sendWorkerWs = new WebSocket(wsUri);
+	distributedWorker.sendWorkerWs = new WebSocket(wsUri);
 	
-	localWorker.sendWorkerWs.onopen = function()
+	distributedWorker.sendWorkerWs.onopen = function()
 	{
-		localWorker.sendWorkerStat = 1;
-		if(localWorker.file != "")
+		distributedWorker.sendWorkerStat = 1;
+		if(distributedWorker.file != "")
 		{
-			localWorker.sendRequest(localWorker.file);
+			distributedWorker.sendRequest(distributedWorker.file);
 		}
 	}; // end function
 	
-	localWorker.sendWorkerWs.onmessage = function(event)
+	distributedWorker.sendWorkerWs.onmessage = function(event)
 	{
 		var json = JSON.parse(event.data);
-		localWorker.postMessage(json.type);
+		distributedWorker.postMessage(json.type);
 		switch(json.type)
 		{
 			case ("RESULT_MESSAGE"): 
 			{
-				localWorker.postMessage(json.content);
+				distributedWorker.postMessage(json.content);
 				//localWorker.terminate();
 				break;
 			}
@@ -105,7 +105,7 @@ function connectToSendWebsocket()
 				var worker = new Worker(file);
 				worker.onmessage = function(e) 
 				{
-					localWorker.postMessage(e.data);
+					distributedWorker.postMessage(e.data);
 				};
 				break;
 			}
@@ -118,17 +118,17 @@ function connectToSendWebsocket()
 		
 	sendWorkerWs.onerror = function(event)
 	{
-		localWorker.postMessage("ERROR");
+		distributedWorker.postMessage("ERROR");
 	}; //end function
 }
 
 function sendToSendWebsocket(type, content)
 {
 	var data = content.replace(/\r|\n/g, " ");
-	if(localWorker.waiterId == null)
-		localWorker.waiterId = "0";
-	data = '{"type":"' + type + '","content":"' + data + '","waiterId":"' + localWorker.waiterId + '"}';
-	localWorker.sendWorkerWs.send(data);
+	if(distributedWorker.waiterId == null)
+		distributedWorker.waiterId = "0";
+	data = '{"type":"' + type + '","content":"' + data + '","waiterId":"' + distributedWorker.waiterId + '"}';
+	distributedWorker.sendWorkerWs.send(data);
 }
 
 							
