@@ -13,4 +13,9 @@ public abstract class MySession
 	{
 		this.sessionId = sessionId;
 	}
+	
+	public String toString()
+	{
+		return "ID: " + this.sessionId;
+	}
 }

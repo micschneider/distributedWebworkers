@@ -6,6 +6,8 @@ public class WaiterSession extends MySession
 {
 	private WaiterEndpoint waiterEndpoint;
 	private boolean free;
+	private int currentWorkers = 0;
+	private static final int MAX_WORKERS = 3;
 	
 	public WaiterSession(WaiterEndpoint wep)
 	{
@@ -14,23 +16,45 @@ public class WaiterSession extends MySession
 		this.free = true;
 	}
 	
+	private void setBusy()
+	{
+		this.free = false;
+	}
+	
+	private void setFree()
+	{
+		this.free = true;
+	}
+	
+	private void checkIfBusy()
+	{
+		if(this.currentWorkers >= MAX_WORKERS)
+			this.setBusy();
+		else
+			this.setFree();
+	}
+	
 	public WaiterEndpoint getWaitWebsocket()
 	{
 		return this.waiterEndpoint;
 	}
 	
-	public void setBusy()
-	{
-		this.free = false;
-	}
-	
-	public void setFree()
-	{
-		this.free = true;
-	}
-	
 	public boolean isFree()
 	{
 		return this.free;
+	}
+	
+	public int addWorker()
+	{
+		this.currentWorkers++;
+		checkIfBusy();
+		return this.currentWorkers;
+	}
+	
+	public int removeWorker()
+	{
+		this.currentWorkers--;
+		checkIfBusy();
+		return this.currentWorkers;
 	}
 }

@@ -1,7 +1,5 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
-import java.util.Iterator;
-
 import fhws.masterarbeit.distributedWebworkers.messages.CodeMessage;
 import fhws.masterarbeit.distributedWebworkers.messages.Message;
 import fhws.masterarbeit.distributedWebworkers.messages.NoRecipientPostMessage;
@@ -43,6 +41,18 @@ public class SenderController
 
 	public void senderEndpointRemoved(String sessionId) 
 	{
+		TableEntry toRemove = this.taskTable.getTableEntryBySenderId(sessionId);
+		
+		if(toRemove != null)
+		{
+			TerminateMessage tm = new TerminateMessage();
+			tm.setContent("Sender ist down");
+			WaiterSession ws = this.sessionMonitor.getWaiterSessionById(toRemove.getWorker());
+			ws.getWaitWebsocket().sendMessage(tm);
+			this.consoleWriter.writeMessageToConsole("Tabelleneintrag " + toRemove + " gelöscht");
+			this.consoleWriter.writeMessageToConsole("Worker " + ws + " bearbeitet nun " + ws.removeWorker() + " Aufgaben");
+			this.taskTable.removeTableEntry(toRemove);
+		}
 		this.sessionMonitor.removeSenderSession(sessionId);
 	}//end method sessionRemoved
 
@@ -59,30 +69,28 @@ public class SenderController
 			WaiterSession ws = this.sessionMonitor.getFreeSessionForWaiter(cm.getWaiterId());
 			if (ws != null)
 			{
-				ws.getWaitWebsocket().sendMessage(message);
+				ws.getWaitWebsocket().sendMessage(cm);
+				this.consoleWriter.writeMessageToConsole("Worker " + ws + "bearbeitet nun " + ws.addWorker() + " fremde Aufgaben");
 				TableEntry te = new TableEntry(cm.getSenderId(), ws.getSessionId());
-				System.out.println("Neuer Eintrag in der TaskTable: " + te);
 				this.taskTable.addTableEntry(te);
+				this.consoleWriter.writeMessageToConsole("Neuer Eintrag in der TaskTable: " + te);		
 			}
 			else
 			{
 				NoWaiterMessage nwm = new NoWaiterMessage();
 				nwm.setContent(cm.getSenderId());
 				sep.sendMessage(nwm);
-				/*TableEntry te = new TableEntry(cm.getSenderId(), cm.getSenderId());
-				System.out.println("Neuer Eintrag in der TaskTable: " + te);
-				this.taskTable.addTableEntry(te);*/
 			}
 		}
 		else if(message instanceof PostMessage)
 		{
 			PostMessage pm = (PostMessage)(message);
-			String workerId = this.taskTable.getWorkerIdBySenderId(pm.getSenderId());
-			if(workerId != null)
+			TableEntry te = this.taskTable.getTableEntryBySenderId(pm.getSenderId());
+			
+			if(te != null)
 			{
-				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(workerId);
-				if(ws!=null)
-					ws.getWaitWebsocket().sendMessage(pm);
+				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(te.getWorker());
+				ws.getWaitWebsocket().sendMessage(pm);
 			}
 			else
 			{
@@ -95,30 +103,19 @@ public class SenderController
 		else if(message instanceof TerminateMessage)
 		{
 			TerminateMessage tm = (TerminateMessage)(message);
-			String workerId = this.taskTable.getWorkerIdBySenderId(tm.getSenderId());
-			if(workerId != null)
+			TableEntry te = this.taskTable.getTableEntryBySenderId(tm.getSenderId());
+		
+			if(te != null)
 			{
-				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(workerId);
-				if(ws!=null)
-					ws.getWaitWebsocket().sendMessage(tm);
-				
-				Iterator<TableEntry> it = this.taskTable.iterator();
-				TableEntry toRemove = null;
-				while(it.hasNext())
-				{
-					TableEntry te = it.next();
-					if(te.getSender().equals(tm.getSenderId()))
-					{
-						toRemove = te;
-						String sender = te.getSender();
-						SenderSession ss = this.sessionMonitor.getSenderSessionById(sender);
-						ss.getSendWebsocket().closeSession();
-						System.out.println("Tabelleneintrag "+ te + " gelöscht");
-					}
-				}
-				if(toRemove != null)
-					this.taskTable.removeTableEntry(toRemove);
+				WaiterSession ws = this.sessionMonitor.getWaiterSessionById(te.getWorker());
+				ws.getWaitWebsocket().sendMessage(tm);
+				this.consoleWriter.writeMessageToConsole("Worker " + ws + " bearbeitet nun "+ ws.removeWorker() + " fremde Aufgaben");
+				this.taskTable.removeTableEntry(te);
+				SenderSession ss = this.sessionMonitor.getSenderSessionById(te.getSender());
+				ss.getSendWebsocket().closeSession();
+				this.consoleWriter.writeMessageToConsole("Tabelleneintrag "+ te + " gelöscht");
 			}
+			
 			else
 			{
 				NoRecipientTerminateMessage nrtm = new NoRecipientTerminateMessage();

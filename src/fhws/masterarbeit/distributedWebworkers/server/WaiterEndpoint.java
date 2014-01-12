@@ -110,7 +110,8 @@ public class WaiterEndpoint
 		{
 			System.out.println("Session mit WaiterClient " + this.session.getId() + "  wird vom Server geschlossen");
 			this.session.close();
-		} catch (IOException e) 
+		} 
+		catch (IOException e) 
 		{
 			e.printStackTrace();
 		}

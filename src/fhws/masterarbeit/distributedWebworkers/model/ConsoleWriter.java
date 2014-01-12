@@ -20,6 +20,6 @@ public class ConsoleWriter
 	
 	public void writeErrorToConsole(Throwable throwable)
 	{
-		System.out.println("ERROR: " + throwable.getStackTrace() + ", CAUSE: " + throwable.getCause());
+		System.out.println("ERROR: " + throwable.getMessage() + ", CAUSE: " + throwable.getCause());
 	}//end method writeErrorToConsole
 }//end class ConsoleWriter

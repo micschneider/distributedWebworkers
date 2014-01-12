@@ -2,6 +2,7 @@ var waitWorkerWs = null;
 var waiterId = "";
 var localWorkerMap = new HashMap();
 var foreignWorkerMap = new HashMap();
+var sendSocketArr = new Array();
 
 (function()
 {
@@ -20,7 +21,7 @@ var foreignWorkerMap = new HashMap();
 	
 	if(browserName == "chrome" || browserName == "firefox" || browserName == "opera")
 	{
-		var waitWsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
+		var waitWsUri = "ws://192.168.0.103:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
 		try 
 		{
 			waitWorkerWs = new WebSocket(waitWsUri);
@@ -87,13 +88,11 @@ var foreignWorkerMap = new HashMap();
 			
 			function sendToWaitWebsocket(type, content, recipientId)
 			{
-				recipientId = (typeof recipientId === "undefined") ? "0" : recipientId;
-				if(waiterId == null)
-					waiterId = "0";
-				data = '{"type":"' + type + '","content":"' + content + '","waiterId":"' + waiterId + '"';
-				if(recipientId != 0)
-					data += ',"recipientId":"' + recipientId + '"';
-				data +=	'}';
+				var message = {};
+		        message.type = type;
+		        message.content = content;
+		        message.recipientId = (typeof recipientId === "undefined") ? "0" : recipientId;
+		        var data = JSON.stringify(message);
 				console.log("WaiterWebsocket sendet:");
 				console.log(data);
 				waitWorkerWs.send(data);
@@ -112,44 +111,40 @@ var foreignWorkerMap = new HashMap();
 
 function DistributedWebworker(file) 
 {
-	var distributedWorker = this;
-	var callback;
-	var code = null;
 	var sendWorkerWs = null;
-		
+	var distributedWorker = this;
+	var callback = null;
+	var code = null;
+	var postMessageArray = new Array();
+	
 	(function()
 	{
 		var req = new XMLHttpRequest();
-		
-		if (req) 
-		{
-			req.onreadystatechange = function()
-			{
-				if (req.readyState == 4) 
-				{
-					code = req.responseText.replace(/\"/g,"'");
-					connectToWs();
-				}
-			};
-			req.open('GET',file,true);     // http-Methode, url, asynchron
-			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-			req.setRequestHeader("Cache-Control", "no-cache");
-			req.setRequestHeader("Pragma", "no-cache");
-			req.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
-			req.send(null);
-		}	
+		req.open('GET',file,false);     // http-Methode, url, synchron
+		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+		req.setRequestHeader("Cache-Control", "no-cache");
+		req.setRequestHeader("Pragma", "no-cache");
+		req.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
+		req.send(null);
+		code = req.responseText.replace(/\"/g,"'");
+		connectToWs();	
 	}());
 
 	function connectToWs()
 	{
-		var wsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
+		var wsUri = "ws://192.168.0.103:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
 			
 		try
 		{
 			sendWorkerWs = new WebSocket(wsUri);
+			sendSocketArr.push(sendWorkerWs);
 			sendWorkerWs.onopen = function()
 			{
 				sendToSendWebsocket("code", code);	
+				for(var i=0; i<postMessageArray.length; i++)
+		        {
+		          sendToSendWebsocket("post", postMessageArray[i]);
+		        }	
 			}; // end function
 			
 			sendWorkerWs.onmessage = function(event)
@@ -164,7 +159,8 @@ function DistributedWebworker(file)
 					{
 						var cbo = {"data":json.content};
 						//sendWorkerWs.close();
-						distributedWorker.callback(cbo);
+						if(distributedWorker.callback != null)
+							distributedWorker.callback(cbo);
 						break;
 					}
 					case ("NO_WAITER_MESSAGE"):
@@ -173,9 +169,15 @@ function DistributedWebworker(file)
 						localWorker.onmessage = function(e) 
 						{
 							var cbo = {"data":e.data};
-							distributedWorker.callback(cbo);
+							if(distributedWorker.callback != null)
+								distributedWorker.callback(cbo);
 						};
 						localWorkerMap.put(json.content, localWorker);
+						break;
+					}
+					case ("WORKER_DOWN_MESSAGE"):
+					{
+						sendToSendWebsocket("code", code);
 						break;
 					}
 					case ("NO_RECIPIENT_POST_MESSAGE"):
@@ -216,10 +218,11 @@ function DistributedWebworker(file)
 
 	function sendToSendWebsocket(type, content)
 	{
-		var data = content.replace(/\r|\n|\t|\s/g, "");
-		if(waiterId == null)
-			waiterId = "0";
-		data = '{"type":"' + type + '","content":"' + data + '","waiterId":"' + waiterId + '"}';
+		var message = {};
+	    message.type = type;
+	    message.content = content;
+	    message.waiterId = (typeof waiterId == null) ? "0" : waiterId;
+	    var data = JSON.stringify(message);
 		console.log("SenderWebsocket sendet:");
 		console.log(data);
 		sendWorkerWs.send(data);
@@ -234,11 +237,11 @@ function DistributedWebworker(file)
 	};
 	
 	this.postMessage = function(message)
-	{
+	{		
 		if(sendWorkerWs.readyState==1)
 			sendToSendWebsocket("post", message);
 		else
-			console.log("Problem beim Senden der Nachricht");
+			postMessageArray.push(message);
 	};
 	
 	this.terminate = function()
@@ -275,5 +278,7 @@ window.addEventListener("unload",
 						{
 							if(waitWorkerWs != null)
 								waitWorkerWs.close();
+							for (var i=0; i<sendSocketArr.length;i++)
+								sendSocketArr[i].close();
 						}, 
 						false);

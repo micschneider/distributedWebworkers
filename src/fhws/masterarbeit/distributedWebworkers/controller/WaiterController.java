@@ -1,10 +1,12 @@
 package fhws.masterarbeit.distributedWebworkers.controller;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import fhws.masterarbeit.distributedWebworkers.messages.ClientMessage;
 import fhws.masterarbeit.distributedWebworkers.messages.IdMessage;
 import fhws.masterarbeit.distributedWebworkers.messages.ResultMessage;
+import fhws.masterarbeit.distributedWebworkers.messages.WorkerDownMessage;
 import fhws.masterarbeit.distributedWebworkers.model.ConsoleWriter;
 import fhws.masterarbeit.distributedWebworkers.model.SenderSession;
 import fhws.masterarbeit.distributedWebworkers.model.SessionMonitor;
@@ -40,7 +42,20 @@ public class WaiterController
 	}//end method sessionAdded
 
 	public void waiterEndpointRemoved(String sessionId) 
-	{
+	{	
+		ArrayList<TableEntry> toRemoveList = this.taskTable.getTableEntriesByWorkerId(sessionId);
+		Iterator<TableEntry> it = toRemoveList.iterator();
+		
+		while(it.hasNext())
+		{
+			TableEntry te = it.next();
+			WorkerDownMessage wdm = new WorkerDownMessage();
+			wdm.setContent("Worker is down");
+			SenderSession ss = this.sessionMonitor.getSenderSessionById(te.getSender());
+			ss.getSendWebsocket().sendMessage(wdm);
+			this.consoleWriter.writeMessageToConsole("Tabelleneintrag " + te + " gelöscht");
+			this.taskTable.removeTableEntry(te);
+		}
 		this.sessionMonitor.removeWaiterSession(sessionId);
 	}//end method sessionRemoved
 
@@ -54,21 +69,17 @@ public class WaiterController
 		if(message instanceof ResultMessage)
 		{
 			ResultMessage rm = (ResultMessage)message;
-			System.out.println("Ergebnis von Waiter mit der ID " + wep.getSession().getId() + " erhalten");
-			Iterator<TableEntry> it = this.taskTable.iterator();
-			while(it.hasNext())
+			this.consoleWriter.writeMessageToConsole("Ergebnis von Waiter mit der ID " + wep.getSession().getId() + " erhalten");
+			
+			TableEntry te = this.taskTable.getTableEntryBySenderId(rm.getRecipientId());
+			if(te != null)
 			{
-				TableEntry te = it.next();
-				if(te.getSender().equals(rm.getRecipientId()))
-				{
-					System.out.println("Empfänger der Ergebnisnachricht gefunden. ID: " + rm.getRecipientId());
-					SenderSession receiverSession = sessionMonitor.getSenderSessionById(rm.getRecipientId());
-					receiverSession.getSendWebsocket().sendMessage(message);
-					//taskTable.removeTableEntry(te);
-					break;
-				}
+				this.consoleWriter.writeMessageToConsole("Empfänger der Ergebnisnachricht gefunden. ID: " + te.getSender());
+				SenderSession recipientSession = sessionMonitor.getSenderSessionById(te.getSender());
+				recipientSession.getSendWebsocket().sendMessage(rm);
+				//taskTable.removeTableEntry(te);
 			}
-		}
+		}		
 	}//end method handleTextMessage
 }//end class WorkerController
 
