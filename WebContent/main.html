@@ -17,6 +17,13 @@
 						alert(e.data);
 					 }, 
 					 false);
+			worker.addEventListener("error",
+					function(e)
+					{
+						alert(e.message + e.filename + e.lineno);
+					},
+					false
+					);
 			workerArr.push(worker);
 			
 			var tabelle = document.getElementById("Tabelle");

@@ -1,6 +1,2 @@
-this.addEventListener("message", 
-					  function(e)
-					  {
-						this.postMessage(e.data);
-					  }, 
-					  false);
+asdkjas{;}
+var i = j
