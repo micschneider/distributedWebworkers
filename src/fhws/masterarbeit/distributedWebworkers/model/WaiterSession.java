@@ -89,7 +89,8 @@ public class WaiterSession extends MySession
 	 */
 	public void removeWorker()
 	{
-		this.currentWorkers--;
+		if (this.currentWorkers > 0)
+			this.currentWorkers--;
 		if (this.currentWorkers >= MAX_WORKERS)
 			this.free = false;
 		else
