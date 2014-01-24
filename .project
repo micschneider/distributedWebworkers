@@ -33,4 +33,21 @@
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.eclipse.wst.jsdt.core.jsNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>WebContent/Mandelbrot/distributedWorkersFramework.js</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/WebContent/distributedWorkersFramework.js</locationURI>
+		</link>
+		<link>
+			<name>WebContent/Pi/distributedWorkersFramework.js</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/WebContent/distributedWorkersFramework.js</locationURI>
+		</link>
+		<link>
+			<name>WebContent/Quicksort/distributedWorkersFramework.js</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/WebContent/distributedWorkersFramework.js</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

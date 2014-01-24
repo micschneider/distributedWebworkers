@@ -27,6 +27,10 @@ public class SessionMonitor
 	 * Stores a static reference to the only existing list of connected sender sessions
 	 */
 	private static HashMap<String, SenderSession> senderSessionList = new HashMap<String, SenderSession>();
+	
+	/**
+	 * Stores a static reference to the only existing sessionMonitor
+	 */
 	private static SessionMonitor sessionMonitor = new SessionMonitor();
 
 	/**
@@ -51,7 +55,7 @@ public class SessionMonitor
 	 * 
 	 * @return The list of connected waiter sessions
 	 */
-	public HashMap<String, WaiterSession> getWaiterSessionList()
+	public synchronized HashMap<String, WaiterSession> getWaiterSessionList()
 	{
 		return waiterSessionList;
 	}// end method getWaiterSessionList()
@@ -61,7 +65,7 @@ public class SessionMonitor
 	 * 
 	 * @return The list of connected sender sessions
 	 */
-	public HashMap<String, SenderSession> getSenderSessionList()
+	public synchronized HashMap<String, SenderSession> getSenderSessionList()
 	{
 		return senderSessionList;
 	}// end method getSenderSessionList()
@@ -71,7 +75,7 @@ public class SessionMonitor
 	 * 
 	 * @param socket The WaiterEndpoint, which should be added as a WaiterSession
 	 */
-	public void addWaiterSession(WaiterEndpoint socket)
+	public synchronized void addWaiterSession(WaiterEndpoint socket)
 	{
 		WaiterSession ws = new WaiterSession(socket);
 		waiterSessionList.put(ws.getSessionId(), ws);
@@ -82,7 +86,7 @@ public class SessionMonitor
 	 * 
 	 * @param socket The SenderEndpoint, which should be added as a SenderSession
 	 */
-	public void addSenderSession(SenderEndpoint socket)
+	public synchronized void addSenderSession(SenderEndpoint socket)
 	{
 		SenderSession ss = new SenderSession(socket);
 		senderSessionList.put(ss.getSessionId(), ss);
@@ -93,7 +97,7 @@ public class SessionMonitor
 	 * 
 	 * @param sessionId The ID of the waiter session to be removed
 	 */
-	public void removeWaiterSession(String sessionId)
+	public synchronized void removeWaiterSession(String sessionId)
 	{
 		waiterSessionList.remove(sessionId);
 	}// end method removeWaiterSession()
@@ -103,7 +107,7 @@ public class SessionMonitor
 	 * 
 	 * @param sessionId The ID of the sender session to be removed
 	 */
-	public void removeSenderSession(String sessionId)
+	public synchronized void removeSenderSession(String sessionId)
 	{
 		senderSessionList.remove(sessionId);
 	}// end method removeSenderSession()
@@ -114,7 +118,7 @@ public class SessionMonitor
 	 * @param id The ID of the sender session, whose reference is needed
 	 * @return A reference to the regarding sender session
 	 */
-	public SenderSession getSenderSessionById(String id)
+	public synchronized SenderSession getSenderSessionById(String id)
 	{
 		// Iterate over the sender session list and find the regarding session
 		Iterator<Entry<String, SenderSession>> it = senderSessionList.entrySet().iterator();
@@ -133,7 +137,7 @@ public class SessionMonitor
 	 * @param id The ID of the waiter session, whose reference is needed
 	 * @return A reference to the regarding waiter session
 	 */
-	public WaiterSession getWaiterSessionById(String id)
+	public synchronized WaiterSession getWaiterSessionById(String id)
 	{
 		// Iterate over the waiter session list and find the regarding session
 		Iterator<Entry<String, WaiterSession>> it = waiterSessionList.entrySet().iterator();
@@ -154,7 +158,7 @@ public class SessionMonitor
 	 * @param waiterId The own waiter ID of the sender session
 	 * @return A reference to a free waiter session, which is not the sender, if possible
 	 */
-	public WaiterSession getFreeSessionForWaiter(String waiterId)
+	public synchronized WaiterSession getFreeSessionForWaiter(String waiterId)
 	{
 		// Create a new array where all free waiter sessions a stored
 		ArrayList<WaiterSession> freeWaiterSessions = new ArrayList<WaiterSession>();

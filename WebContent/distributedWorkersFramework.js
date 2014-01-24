@@ -66,8 +66,8 @@
 
 		// Check if the browser is supported for receiving and executing work
 		// packages
-		if (browserName == "chrome" || browserName == "firefox"
-				|| browserName == "opera")
+		if ((browserName == "chrome" || browserName == "firefox"
+				|| browserName == "opera") && waitWorkerWs == null)
 		{
 			try
 			{
@@ -334,6 +334,7 @@
 							// the callback function
 							var cbo =
 							{
+								"target" : distributedWorker,
 								"data" : json.content
 							};
 							if (distributedWorker.callback != null)
@@ -368,6 +369,7 @@
 								// the callback function
 								var cbo =
 								{
+									"target" : distributedWorker,
 									"data" : e.data
 								};
 								if (distributedWorker.callback != null)

@@ -72,7 +72,7 @@ public class WaiterController
 	 * 
 	 * @param wep A reference to the new WaiterEndpoint created by the new WebSocket connection
 	 */
-	public void waiterEndpointAdded(WaiterEndpoint wep)
+	public synchronized void waiterEndpointAdded(WaiterEndpoint wep)
 	{
 		// Add the new waiter session to the session monitor
 		this.sessionMonitor.addWaiterSession(wep);
@@ -91,7 +91,7 @@ public class WaiterController
 	 * 
 	 * @param sessionId The session ID of the waiter client to be removed
 	 */
-	public void waiterEndpointRemoved(String sessionId)
+	public synchronized void waiterEndpointRemoved(String sessionId)
 	{
 		// Get the Table entries where the waiter client is registered as worker
 		ArrayList<TableEntry> toRemoveList = this.taskTable.getTableEntriesByWorkerId(sessionId);
@@ -122,7 +122,7 @@ public class WaiterController
 	 * 
 	 * @param throwable A reference to the throwable object
 	 */
-	public void handleError(Throwable throwable)
+	public synchronized void handleError(Throwable throwable)
 	{
 		this.consoleWriter.writeErrorToConsole(throwable);
 	}// end method handleError()
@@ -133,7 +133,7 @@ public class WaiterController
 	 * @param message The message incoming from the client
 	 * @param wep The WaiterEndpoint, which received the message
 	 */
-	public void handleMessage(ClientMessage message, WaiterEndpoint wep)
+	public synchronized void handleMessage(ClientMessage message, WaiterEndpoint wep)
 	{
 		// Check if the message contains a result
 		if (message instanceof ResultMessage)

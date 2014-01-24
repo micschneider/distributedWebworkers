@@ -70,7 +70,7 @@ public class SenderController
 	 * 
 	 * @param sep The SenderEndpoint to be added to the session monitors list
 	 */
-	public void senderEndpointAdded(SenderEndpoint sep)
+	public synchronized void senderEndpointAdded(SenderEndpoint sep)
 	{
 		this.sessionMonitor.addSenderSession(sep);
 	}// end method senderEndpointAdded()
@@ -83,7 +83,7 @@ public class SenderController
 	 * 
 	 * @param sessionId The session ID of the disconnecting sender client
 	 */
-	public void senderEndpointRemoved(String sessionId)
+	public synchronized void senderEndpointRemoved(String sessionId)
 	{
 		// Get the TableEntry where the sender client is registered as sender
 		TableEntry toRemove = this.taskTable.getTableEntryBySenderId(sessionId);
@@ -116,7 +116,7 @@ public class SenderController
 	 * 
 	 * @param throwable A reference to the throwable object
 	 */
-	public void handleError(Throwable throwable)
+	public synchronized void handleError(Throwable throwable)
 	{
 		consoleWriter.writeErrorToConsole(throwable);
 	}// end method handleError()
@@ -127,7 +127,7 @@ public class SenderController
 	 * @param message The message, which is incoming
 	 * @param sep The SenderEndpoint which receives the message
 	 */
-	public void handleMessage(Message message, SenderEndpoint sep)
+	public synchronized void handleMessage(Message message, SenderEndpoint sep)
 	{
 		// Check if the message is a code message
 		if (message instanceof CodeMessage)

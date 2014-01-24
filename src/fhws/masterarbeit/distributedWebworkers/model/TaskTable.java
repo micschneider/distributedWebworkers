@@ -45,7 +45,7 @@ public class TaskTable implements Iterable<TableEntry>
 	 * 
 	 * @return The entry list of the task table
 	 */
-	public ArrayList<TableEntry> getEntryList()
+	public synchronized ArrayList<TableEntry> getEntryList()
 	{
 		return this.entryList;
 	}// end method getEntryList()
@@ -55,7 +55,7 @@ public class TaskTable implements Iterable<TableEntry>
 	 * 
 	 * @param entry Represents the entry to be added to the task table
 	 */
-	public void addTableEntry(TableEntry entry)
+	public synchronized void addTableEntry(TableEntry entry)
 	{
 		entryList.add(entry);
 	}// end method addTableEntry()
@@ -65,7 +65,7 @@ public class TaskTable implements Iterable<TableEntry>
 	 * 
 	 * @param entry Represents the entry to be removed
 	 */
-	public void removeTableEntry(TableEntry entry)
+	public synchronized void removeTableEntry(TableEntry entry)
 	{
 		entryList.remove(entry);
 	}// end method removeTableEntry()
@@ -77,7 +77,7 @@ public class TaskTable implements Iterable<TableEntry>
 	 * @param senderId The sender ID, which should be found in the task table
 	 * @return The regarding table entry for the given sender ID, if found
 	 */
-	public TableEntry getTableEntryBySenderId(String senderId)
+	public synchronized TableEntry getTableEntryBySenderId(String senderId)
 	{
 		// Iterate over the task table and look up the sender ID
 		Iterator<TableEntry> it = iterator();
@@ -99,7 +99,7 @@ public class TaskTable implements Iterable<TableEntry>
 	 * @param workerId The ID of the waiter client, which should be looked up in the task table
 	 * @return A list of table entries, where the waiter client is registered as the worker
 	 */
-	public ArrayList<TableEntry> getTableEntriesByWorkerId(String workerId)
+	public synchronized ArrayList<TableEntry> getTableEntriesByWorkerId(String workerId)
 	{
 		// Iteratate over the task table and look up the worker ID
 		Iterator<TableEntry> it = iterator();
@@ -118,10 +118,10 @@ public class TaskTable implements Iterable<TableEntry>
 	 * Overrides the iterator() method of the Iterable interface. Returns an interator, which can
 	 * iterate over the task table.
 	 * 
-	 * @return A reference to an interator, which can iterate over the task table
+	 * @return A reference to an iterator, which can iterate over the task table
 	 */
 	@Override
-	public Iterator<TableEntry> iterator()
+	public synchronized Iterator<TableEntry> iterator()
 	{
 		Iterator<TableEntry> iter = entryList.iterator();
 		return iter;
