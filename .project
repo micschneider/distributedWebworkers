@@ -49,5 +49,10 @@
 			<type>1</type>
 			<locationURI>PROJECT_LOC/WebContent/distributedWorkersFramework.js</locationURI>
 		</link>
+		<link>
+			<name>WebContent/WorkerPage/distributedWorkersFramework.js</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/WebContent/distributedWorkersFramework.js</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>

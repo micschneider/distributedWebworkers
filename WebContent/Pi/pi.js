@@ -1,6 +1,5 @@
 this.addEventListener("message", init, false);
 
-
 function init(e)
 {
 	var arrayString = e.data;

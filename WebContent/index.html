@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Distributed Webworkers</title>
+</head>
+<body>
+<h1>Willkommen zum Distributed Webworkers Framework</h1>
+<div>
+<h2>Was ist das Distributed Webworkers Framework?</h2>
+	Mit diesem Framework lassen sich JavaScript-Arbeitspakete, die ein Browser zu berechnen hat, auf
+	andere Rechner verteilen, die das Ergebnis an den entsprechenden Auftraggeber zurückliefern.<br>
+	Verwendet wird hierzu ein Glassfish Application Server in der Version 4.0, der die Verteilung und 
+	die korrekte Rücklieferung der Pakete übernimmt. Zum Versenden der Arbeitspakete werden die in HTML5
+	neu hinzuekommenen Websockets verwendet. Die tatsächliche Abarbeitung der Aufgaben durch den Browser
+	passiert in einem dynamisch erzeugten Thread (WebWorker-API!), sodass die AUsführung der eigentlichen
+	Seite nicht beeinträchtigt wird.<br> 
+	Komplexe parallelisierbare Berechnungen wie die als Beispiel beiliegende Mandelbrotmengen-Berechnung 
+	lassen sich somit parallel in einem Netzwerk verteilter Webbrowser durchführen.
+</div>
+<div>
+<h2>Wie verwendet man das Framework?</h2>
+	Um einen Rechner bzw. Browser als Arbeiter-Client zur Verfügung zu stellen, reicht die Einbindung des 
+	Frameworks in den entsprechenden HTML-Code aus. Dies kann zum Beispiel im head-Bereich geschehen:<br><br>
+	&lt;head&gt; <br>
+	&lt;meta charset="ISO-8859-1"&gt; <br>
+	<b>&lt;script src="distributedWorkersFramework.js"&gt;&lt;/script&gt;</b><br>
+	...<br>
+	&lt;/head&gt;<br><br>
+	Möchte man die Rechenleistung der - wie eben gezeigt - zu Teilnehmern im Netzwerk gemachten Browser
+	nutzen, muss zunächst ebenfalls das Framework eingebunden werden. Die Erzeugung eines Workers
+	funktioniert anschließend analog zur WebWorker API, nur das nun ein DistributedWebworker erzeugt wird:<br><br>
+	<b>var worker = new DistributedWebworker("yourFileName.js");</b><br><br>
+	Die Datei "yourFileName.js" muss auf dem Webserver existieren, da deren Inhalt zum Worker transferiert
+	und von diesem ausgeführt wird. Mit dem verteilt laufenden Worker kann wie folgt kommunizert werden:<br><br>
+	<b>worker.postMessage("yourMessage");</b><br><br>
+	Nun muss noch auf eingehende Nachrichten, insbesondere die Ergebnisse, des Workers reagiert werden. Dazu
+	wird dem Worker-Objekt einfach ein EventListener hinzugefügt:<br><br>
+	<b>worker.addEventListener("message", yourMethod, false);</b><br><br>
+	Der erste Parameter "message" gibt an, dass man auf ein Message-Ereignis reagieren möchte. Die Methode
+	yourMethod wird beim Eintritt des Ereignisses aufgerufen. Der Parameter "false" hat im 
+	Framework keine Auswirkungen.	
+</div>
+<div>
+<h2>Beispiele</h2>
+<a href="/fhws.masterarbeit.distributedWebworkers/WorkerPage/index.html">WorkerClient-Seite (Suchmaschine)</a><br>
+<a href="/fhws.masterarbeit.distributedWebworkers/Pi/index.html">Parallele Pi-Berechnung</a><br>
+<a href="/fhws.masterarbeit.distributedWebworkers/Quicksort/main.html">Verteilte Quicksort-Berechnung</a><br>
+<a href="/fhws.masterarbeit.distributedWebworkers/Mandelbrot/Mandelbrot.html">Parallele Mandelbrot-Berechnung</a>
+</div>
+</body>
+</html>

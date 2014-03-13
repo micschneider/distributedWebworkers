@@ -6,8 +6,12 @@
 <script type="text/javascript" src="distributedWorkersFramework.js"></script>
 <script type="text/javascript">
 	var numberOfWorkers = 1;
-	var numberOfMessages = 3;
-	var numberOfElements = 10;
+	var numberOfMessages = 10000;
+	var numberOfElements = 100000;
+	
+	var messungenInsgesamt = 100;
+	var messungenAktuell = 0;
+	var messungenArray = null;
 
 	var workerMap = null;
 	var numberOfResults;
@@ -16,24 +20,26 @@
 
 	function init()
 	{
-		workerMap = new HashMap();
-		numberOfResults = 0;
-		pi = 0.0;
-		startTime = 0;
-		
-		for ( var i = 0; i < numberOfWorkers; i++)
-		{
-			var worker = new DistributedWebworker("pi.js");
-			worker.addEventListener("message", message, false);
-			workerMap.put(i, worker);
-		}
+		messungenArray = new Array();
+		messungenAktuell = 0;
 		calculate();
 	}
 	
 	function calculate()
 	{
+		workerMap = new HashMap();
 		startTime = new Date().getTime();
-		for ( var i = 0; i < numberOfMessages; i++)
+		numberOfResults = 0;
+		pi = 0.0;
+		
+		for ( var i = 0; i < numberOfWorkers; i++)
+		{
+			var worker = new Worker("pi.js");
+			worker.addEventListener("message", message, false);
+			workerMap.put(i, worker);
+		}
+		
+		for (var i = 0; i < numberOfMessages; i++)
 		{
 			var start = i * numberOfElements;
 			var workerCounter = i % numberOfWorkers;
@@ -48,12 +54,61 @@
 		pi += parseFloat(e.data);
 		if (numberOfResults == numberOfMessages)
 		{
-			var finishTime = (new Date().getTime() - startTime)/1000;
-			var output = document.getElementById("output");
-			output.innerHTML = "FERTIG!<br>PI = " + pi + "<br>Benötigte Zeit: " + finishTime + "s";
+			var finishTime = (new Date().getTime() - startTime);
+			messungenAktuell++;
+			messungenArray.push(finishTime);
+			if(messungenAktuell < messungenInsgesamt)
+			{
+				calculate();	
+			}
+			else
+			{
+				var messungMin = getMessungMin();
+				var messungMax = getMessungMax();
+				var messungenDurchschnitt = getMessungDurchschnitt();
+				var output = document.getElementById("output");
+				output.innerHTML = "FERTIG! " + messungenInsgesamt + " Messungen durchgeführt!<br>";
+				output.innerHTML += "PI = " + pi + "<br>";
+				output.innerHTML += "Durchschnittliche Zeit: " + messungenDurchschnitt + " Millisekunden<br>";
+				output.innerHTML += "Schnellster Durchlauf: " + messungMin + " Millisekunden<br>";
+				output.innerHTML += "Langsamster Durchlauf: " + messungMax + " Millisekunden";	
+			}
 		}
 	}
 
+	function getMessungMin()
+	{
+		var minValue = messungenArray[0];
+		for(var i = 1; i < messungenArray.length; i++)
+		{
+			if(messungenArray[i] < minValue)
+				minValue = messungenArray[i];
+		}
+		return minValue;	
+	}
+	
+	function getMessungMax()
+	{
+		var maxValue = messungenArray[0];
+		for(var i = 1; i < messungenArray.length; i++)
+		{
+			if(messungenArray[i] > maxValue)
+				maxValue = messungenArray[i];
+		}
+		return maxValue;
+	}
+	
+	function getMessungDurchschnitt()
+	{
+		var durchschnitt = 0;
+		for (var i = 0; i < messungenArray.length; i++)
+		{
+			durchschnitt += messungenArray[i];
+		}
+		durchschnitt = durchschnitt / messungenArray.length;
+		return durchschnitt;
+	}
+	
 	function HashMap()
 	{
 		this.list = new Array();
