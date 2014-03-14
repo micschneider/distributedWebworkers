@@ -8,12 +8,12 @@
 	/**
 	 * The IP address of the servers wait WebSocket endpoint (WaiterEndpoint)
 	 */
-	var waitWsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
+	var waitWsUri = "ws://192.168.0.169:8080/fhws.masterarbeit.distributedWebworkers/waitWebsocket";
 
 	/**
 	 * The IP address of the servers send WebSocket endpoint (SenderEndpoint)
 	 */
-	var sendWsUri = "ws://localhost:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
+	var sendWsUri = "ws://192.168.0.169:8080/fhws.masterarbeit.distributedWebworkers/sendWebsocket";
 
 	/**
 	 * Represents the waiter/worker WebSocket
