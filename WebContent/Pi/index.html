@@ -5,13 +5,13 @@
 <title>Parallele Pi-Berechnung</title>
 <script type="text/javascript" src="distributedWorkersFramework.js"></script>
 <script type="text/javascript">
-	var numberOfWorkers = 1;
-	var numberOfMessages = 10000;
-	var numberOfElements = 100000;
+	var numberOfWorkers = 4;
+	var numberOfMessages = 10;
+	var numberOfElements = 100;
 	
 	var messungenInsgesamt = 100;
 	var messungenAktuell = 0;
-	var messungenArray = null;
+	var versuch = null;
 
 	var workerMap = null;
 	var numberOfResults;
@@ -20,7 +20,7 @@
 
 	function init()
 	{
-		messungenArray = new Array();
+		versuch = new Versuch();
 		messungenAktuell = 0;
 		calculate();
 	}
@@ -32,7 +32,7 @@
 		numberOfResults = 0;
 		pi = 0.0;
 		
-		for ( var i = 0; i < numberOfWorkers; i++)
+		for (var i = 0; i < numberOfWorkers; i++)
 		{
 			var worker = new Worker("pi.js");
 			worker.addEventListener("message", message, false);
@@ -56,16 +56,19 @@
 		{
 			var finishTime = (new Date().getTime() - startTime);
 			messungenAktuell++;
-			messungenArray.push(finishTime);
+			versuch.push(finishTime);
+			for(var i = 0; i < numberOfWorkers; i++)
+				workerMap.get(i).terminate();
+			
 			if(messungenAktuell < messungenInsgesamt)
 			{
 				calculate();	
 			}
 			else
 			{
-				var messungMin = getMessungMin();
-				var messungMax = getMessungMax();
-				var messungenDurchschnitt = getMessungDurchschnitt();
+				var messungMin = versuch.getMin();
+				var messungMax = versuch.getMax();
+				var messungenDurchschnitt = versuch.getDurchschnitt();
 				var output = document.getElementById("output");
 				output.innerHTML = "FERTIG! " + messungenInsgesamt + " Messungen durchgeführt!<br>";
 				output.innerHTML += "PI = " + pi + "<br>";
@@ -75,38 +78,56 @@
 			}
 		}
 	}
-
-	function getMessungMin()
-	{
-		var minValue = messungenArray[0];
-		for(var i = 1; i < messungenArray.length; i++)
-		{
-			if(messungenArray[i] < minValue)
-				minValue = messungenArray[i];
-		}
-		return minValue;	
-	}
 	
-	function getMessungMax()
+	function Versuch()
 	{
-		var maxValue = messungenArray[0];
-		for(var i = 1; i < messungenArray.length; i++)
+		this.messungenArray = new Array();
+		
+		this.push = function(value)
 		{
-			if(messungenArray[i] > maxValue)
-				maxValue = messungenArray[i];
-		}
-		return maxValue;
-	}
-	
-	function getMessungDurchschnitt()
-	{
-		var durchschnitt = 0;
-		for (var i = 0; i < messungenArray.length; i++)
+			this.messungenArray.push(value);
+		};
+		
+		this.clear = function()
 		{
-			durchschnitt += messungenArray[i];
-		}
-		durchschnitt = durchschnitt / messungenArray.length;
-		return durchschnitt;
+			for(var i = 0; i < this.messungenArray.length; i++)
+			{
+				this.messungenArray[i] = null;
+			}
+		};
+		
+		this.getDurchschnitt = function()
+		{
+			var durchschnitt = 0;
+			for (var i = 0; i < this.messungenArray.length; i++)
+			{
+				durchschnitt += this.messungenArray[i];
+			}
+			durchschnitt = durchschnitt / this.messungenArray.length;
+			return durchschnitt;
+		};
+		
+		this.getMin = function()
+		{
+			var minValue = this.messungenArray[0];
+			for(var i = 1; i < this.messungenArray.length; i++)
+			{
+				if(this.messungenArray[i] < minValue)
+					minValue = this.messungenArray[i];
+			}
+			return minValue;	
+		};
+		
+		this.getMax = function()
+		{
+			var maxValue = this.messungenArray[0];
+			for(var i = 1; i < this.messungenArray.length; i++)
+			{
+				if(this.messungenArray[i] > maxValue)
+					maxValue = this.messungenArray[i];
+			}
+			return maxValue;
+		};
 	}
 	
 	function HashMap()
