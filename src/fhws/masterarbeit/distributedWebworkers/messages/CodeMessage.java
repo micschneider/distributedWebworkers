@@ -17,7 +17,7 @@ public class CodeMessage extends ClientMessage
 	 * work for more than one sender. If a PostMessage is incoming the waiter has to know, which
 	 * worker thread has to receive it.
 	 */
-	protected String waiterId;
+	private String waiterId;
 
 	/**
 	 * Constructor for a CodeMessage. Uses the constructor from the super class

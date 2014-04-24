@@ -49,6 +49,7 @@ public class SenderController
 	 */
 	private SenderController()
 	{
+		System.out.println("controller startet");
 		// Get references to the other singletons
 		this.sessionMonitor = SessionMonitor.getSessionMonitor();
 		this.consoleWriter = ConsoleWriter.getConsoleWriter();

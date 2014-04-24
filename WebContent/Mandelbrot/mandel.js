@@ -31,7 +31,7 @@ function init()
 	for ( var i = 0; i < numberOfWorkers; i++)
 	{
 		// Neuen Worker erstellen
-		var worker = new Worker("worker.js");
+		var worker = new DistributedWebworker("worker.js");
 
 		// MessageHandler setzen
 		worker.addEventListener("message", function(event)
